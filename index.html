@@ -36,11 +36,12 @@
     <div id="version"></div>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script>
-        const version = "1.0.1";
+        const version = "1.0.2";
 
         let scene, camera, renderer;
         let roadMarkers = [];
         let streetLights = [];
+        let oncomingCarLights = [];
         let speed = 0.1;
         let maxSpeed = 0.5;
         let acceleration = 0.005;
@@ -87,6 +88,9 @@
             const lightMaterial = new THREE.MeshBasicMaterial({ color: 0x888888 });
             const lightGlowMaterial = new THREE.MeshBasicMaterial({ color: 0xffff00 });
 
+            const haloTexture = new THREE.TextureLoader().load('https://threejs.org/examples/textures/sprites/spark1.png');
+            const haloMaterial = new THREE.SpriteMaterial({ map: haloTexture, color: 0xffff00, blending: THREE.AdditiveBlending });
+
             for (let i = 0; i < 20; i++) {
                 let light = new THREE.Mesh(lightGeometry, lightMaterial);
                 light.position.set(-2, 2.5, -i * 50 + 10);
@@ -96,7 +100,12 @@
                 lightGlow.position.set(-2, 5, -i * 50 + 10);
                 scene.add(lightGlow);
 
-                streetLights.push({ light, lightGlow });
+                let halo = new THREE.Sprite(haloMaterial);
+                halo.scale.set(1, 1, 1);
+                halo.position.set(-2, 5, -i * 50 + 10);
+                scene.add(halo);
+
+                streetLights.push({ light, lightGlow, halo });
             }
 
             // Add event listeners for key press and release
@@ -116,6 +125,31 @@
             if (event.code === 'Space') {
                 isAccelerating = false;
             }
+        }
+
+        function createOncomingCarLights() {
+            const carLightMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff });
+            const carLightGlowMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff });
+
+            let carLightLeft = new THREE.Mesh(new THREE.SphereGeometry(0.1, 32, 32), carLightMaterial);
+            carLightLeft.position.set(-0.5, 0.5, -50);
+            scene.add(carLightLeft);
+
+            let carLightRight = new THREE.Mesh(new THREE.SphereGeometry(0.1, 32, 32), carLightMaterial);
+            carLightRight.position.set(0.5, 0.5, -50);
+            scene.add(carLightRight);
+
+            let haloLeft = new THREE.Sprite(new THREE.SpriteMaterial({ map: haloTexture, color: 0xffffff, blending: THREE.AdditiveBlending }));
+            haloLeft.scale.set(0.5, 0.5, 0.5);
+            haloLeft.position.set(-0.5, 0.5, -50);
+            scene.add(haloLeft);
+
+            let haloRight = new THREE.Sprite(new THREE.SpriteMaterial({ map: haloTexture, color: 0xffffff, blending: THREE.AdditiveBlending }));
+            haloRight.scale.set(0.5, 0.5, 0.5);
+            haloRight.position.set(0.5, 0.5, -50);
+            scene.add(haloRight);
+
+            oncomingCarLights.push({ carLightLeft, carLightRight, haloLeft, haloRight });
         }
 
         function animate() {
@@ -143,14 +177,36 @@
             });
 
             // Move streetlights and reset position
-            streetLights.forEach(({ light, lightGlow }) => {
+            streetLights.forEach(({ light, lightGlow, halo }) => {
                 light.position.z += speed;
                 lightGlow.position.z += speed;
+                halo.position.z += speed;
                 if (light.position.z > 10) {
                     light.position.z -= 1000;
                     lightGlow.position.z -= 1000;
+                    halo.position.z -= 1000;
                 }
             });
+
+            // Move oncoming car lights and remove if out of view
+            oncomingCarLights.forEach(({ carLightLeft, carLightRight, haloLeft, haloRight }, index) => {
+                carLightLeft.position.z += speed / 3; // Oncoming car lights should move at 1/3 of the player's speed
+                carLightRight.position.z += speed / 3;
+                haloLeft.position.z += speed / 3;
+                haloRight.position.z += speed / 3;
+                if (carLightLeft.position.z > 5) {
+                    scene.remove(carLightLeft);
+                    scene.remove(carLightRight);
+                    scene.remove(haloLeft);
+                    scene.remove(haloRight);
+                    oncomingCarLights.splice(index, 1);
+                }
+            });
+
+            // Randomly create oncoming car lights
+            if (Math.random() < 0.01) {
+                createOncomingCarLights();
+            }
 
             renderer.render(scene, camera);
         }
