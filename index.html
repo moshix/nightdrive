@@ -18,23 +18,41 @@
             padding: 5px 10px;
             border-radius: 5px;
         }
+        #version {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            color: white;
+            font-family: Arial, sans-serif;
+            font-size: 20px;
+            background-color: rgba(0, 0, 0, 0.5);
+            padding: 5px 10px;
+            border-radius: 5px;
+        }
     </style>
 </head>
 <body>
-    <div id="speedometer">Speed: 0 km/h</div>
+    <div id="speedometer">Speed: 0 km/h | Distance: 0 km / 0 miles</div>
+    <div id="version"></div>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script>
+        const version = "1.0.1";
+
         let scene, camera, renderer;
         let roadMarkers = [];
         let streetLights = [];
         let speed = 0.1;
         let maxSpeed = 0.5;
-        let acceleration = 0.02;
-        let deceleration = 0.01;
+        let acceleration = 0.005;
+        let deceleration = 0.002;
         let isAccelerating = false;
+        let distanceTraveled = 0;
         let speedometer = document.getElementById('speedometer');
+        let versionDisplay = document.getElementById('version');
 
         function init() {
+            versionDisplay.textContent = `Version: ${version}`;
+
             scene = new THREE.Scene();
             scene.background = new THREE.Color(0x000000);
 
@@ -110,8 +128,11 @@
                 speed = Math.max(speed - deceleration, 0.1);
             }
 
+            // Update distance traveled
+            distanceTraveled += speed * 0.01; // Increment distance based on speed
+
             // Update speedometer
-            speedometer.textContent = `Speed: ${(speed * 100).toFixed(1)} km/h`;
+            speedometer.textContent = `Speed: ${(speed * 100).toFixed(1)} km/h | Distance: ${(distanceTraveled * 10).toFixed(1)} km / ${(distanceTraveled * 6.2137).toFixed(1)} miles`;
 
             // Move the road markers and reset position for infinite scrolling effect
             roadMarkers.forEach(marker => {
