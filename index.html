@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Night-time Driving Simulation</title>
+    <style>
+        body { margin: 0; overflow: hidden; }
+        canvas { display: block; }
+    </style>
+</head>
+<body>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        let scene, camera, renderer;
+        let roadMarkers = [];
+        let streetLights = [];
+        let speed = 0.1;
+        let maxSpeed = 0.5;
+        let acceleration = 0.02;
+        let deceleration = 0.01;
+        let isAccelerating = false;
+
+        function init() {
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x000000);
+
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.set(0, 1, 5);
+            camera.rotation.x = -0.1;
+
+            renderer = new THREE.WebGLRenderer();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            document.body.appendChild(renderer.domElement);
+
+            // Create road markers (short white bars)
+            const markerGeometry = new THREE.PlaneGeometry(0.2, 1);
+            const markerMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff });
+            
+            for (let i = 0; i < 200; i++) {
+                let markerLeft = new THREE.Mesh(markerGeometry, markerMaterial);
+                markerLeft.rotation.x = -Math.PI / 2;
+                markerLeft.position.set(-2, 0.01, -i * 5 + 10);
+                scene.add(markerLeft);
+                roadMarkers.push(markerLeft);
+                
+                let markerRight = new THREE.Mesh(markerGeometry, markerMaterial);
+                markerRight.rotation.x = -Math.PI / 2;
+                markerRight.position.set(2, 0.01, -i * 5 + 10);
+                scene.add(markerRight);
+                roadMarkers.push(markerRight);
+            }
+
+            // Create streetlights
+            const lightGeometry = new THREE.CylinderGeometry(0.1, 0.1, 5, 32);
+            const lightMaterial = new THREE.MeshBasicMaterial({ color: 0x888888 });
+            const lightGlowMaterial = new THREE.MeshBasicMaterial({ color: 0xffff00 });
+
+            for (let i = 0; i < 20; i++) {
+                let light = new THREE.Mesh(lightGeometry, lightMaterial);
+                light.position.set(-2, 2.5, -i * 50 + 10);
+                scene.add(light);
+
+                let lightGlow = new THREE.Mesh(new THREE.SphereGeometry(0.2, 32, 32), lightGlowMaterial);
+                lightGlow.position.set(-2, 5, -i * 50 + 10);
+                scene.add(lightGlow);
+
+                streetLights.push({ light, lightGlow });
+            }
+
+            // Add event listeners for key press and release
+            document.addEventListener('keydown', onKeyDown);
+            document.addEventListener('keyup', onKeyUp);
+
+            animate();
+        }
+
+        function onKeyDown(event) {
+            if (event.code === 'Space') {
+                isAccelerating = true;
+            }
+        }
+
+        function onKeyUp(event) {
+            if (event.code === 'Space') {
+                isAccelerating = false;
+            }
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            // Handle acceleration and deceleration
+            if (isAccelerating) {
+                speed = Math.min(speed + acceleration, maxSpeed);
+            } else {
+                speed = Math.max(speed - deceleration, 0.1);
+            }
+
+            // Move the road markers and reset position for infinite scrolling effect
+            roadMarkers.forEach(marker => {
+                marker.position.z += speed;
+                if (marker.position.z > 10) {
+                    marker.position.z -= 1000;
+                }
+            });
+
+            // Move streetlights and reset position
+            streetLights.forEach(({ light, lightGlow }) => {
+                light.position.z += speed;
+                lightGlow.position.z += speed;
+                if (light.position.z > 10) {
+                    light.position.z -= 1000;
+                    lightGlow.position.z -= 1000;
+                }
+            });
+
+            renderer.render(scene, camera);
+        }
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        init();
+    </script>
+</body>
+</html>
