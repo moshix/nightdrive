@@ -36,7 +36,7 @@
     <div id="version"></div>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script>
-        const version = "1.0.2";
+        const version = "1.0.3";
 
         let scene, camera, renderer;
         let roadMarkers = [];
@@ -101,7 +101,7 @@
                 scene.add(lightGlow);
 
                 let halo = new THREE.Sprite(haloMaterial);
-                halo.scale.set(1, 1, 1);
+                halo.scale.set(2, 2, 2);  // Increase the scale for a more pronounced halo effect
                 halo.position.set(-2, 5, -i * 50 + 10);
                 scene.add(halo);
 
@@ -129,24 +129,23 @@
 
         function createOncomingCarLights() {
             const carLightMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff });
-            const carLightGlowMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff });
 
             let carLightLeft = new THREE.Mesh(new THREE.SphereGeometry(0.1, 32, 32), carLightMaterial);
-            carLightLeft.position.set(-0.5, 0.5, -50);
+            carLightLeft.position.set(-0.3, 0.5, -50);
             scene.add(carLightLeft);
 
             let carLightRight = new THREE.Mesh(new THREE.SphereGeometry(0.1, 32, 32), carLightMaterial);
-            carLightRight.position.set(0.5, 0.5, -50);
+            carLightRight.position.set(0.3, 0.5, -50);
             scene.add(carLightRight);
 
             let haloLeft = new THREE.Sprite(new THREE.SpriteMaterial({ map: haloTexture, color: 0xffffff, blending: THREE.AdditiveBlending }));
-            haloLeft.scale.set(0.5, 0.5, 0.5);
-            haloLeft.position.set(-0.5, 0.5, -50);
+            haloLeft.scale.set(1, 1, 1);  // Increase the scale for a more pronounced halo effect
+            haloLeft.position.set(-0.3, 0.5, -50);
             scene.add(haloLeft);
 
             let haloRight = new THREE.Sprite(new THREE.SpriteMaterial({ map: haloTexture, color: 0xffffff, blending: THREE.AdditiveBlending }));
-            haloRight.scale.set(0.5, 0.5, 0.5);
-            haloRight.position.set(0.5, 0.5, -50);
+            haloRight.scale.set(1, 1, 1);  // Increase the scale for a more pronounced halo effect
+            haloRight.position.set(0.3, 0.5, -50);
             scene.add(haloRight);
 
             oncomingCarLights.push({ carLightLeft, carLightRight, haloLeft, haloRight });
@@ -190,11 +189,19 @@
 
             // Move oncoming car lights and remove if out of view
             oncomingCarLights.forEach(({ carLightLeft, carLightRight, haloLeft, haloRight }, index) => {
-                carLightLeft.position.z += speed / 3; // Oncoming car lights should move at 1/3 of the player's speed
-                carLightRight.position.z += speed / 3;
-                haloLeft.position.z += speed / 3;
-                haloRight.position.z += speed / 3;
-                if (carLightLeft.position.z > 5) {
+                carLightLeft.position.z += speed * 4; // Oncoming car lights should move faster to eventually pass the player
+                carLightRight.position.z += speed * 4;
+                haloLeft.position.z += speed * 4;
+                haloRight.position.z += speed * 4;
+
+                // Scale up the lights as they approach
+                const scale = Math.max(1, 10 / Math.abs(carLightLeft.position.z));
+                carLightLeft.scale.set(scale, scale, scale);
+                carLightRight.scale.set(scale, scale, scale);
+                haloLeft.scale.set(scale, scale, scale);
+                haloRight.scale.set(scale, scale, scale);
+
+                if (carLightLeft.position.z > 10) {
                     scene.remove(carLightLeft);
                     scene.remove(carLightRight);
                     scene.remove(haloLeft);
