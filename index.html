@@ -162,7 +162,7 @@
             }
 
             // Update distance traveled
-            distanceTraveled += speed * 0.01; // Increment distance based on speed
+            distanceTraveled += speed * 0.001; // Increment distance based on speed
 
             // Update speedometer
             speedometer.textContent = `Speed: ${(speed * 100).toFixed(1)} km/h | Distance: ${(distanceTraveled * 10).toFixed(1)} km / ${(distanceTraveled * 6.2137).toFixed(1)} miles`;
